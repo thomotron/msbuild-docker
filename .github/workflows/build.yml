@@ -25,7 +25,7 @@ jobs:
           Invoke-WebRequest -Uri https://aka.ms/vs/$env:VS_VERSION/release/channel -OutFile channel.json
           
           # run buildtools installer
-          cmd /S /C "start /w vs_BuildTools.exe --channelURI https://aka.ms/vs/%VS_VERSION%/release/channel --nocache --noUpdateInstaller --installPath %cd%\vs_buildtools --addProductLang en-US --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --wait --quiet"
+          cmd /S /C "start /w vs_BuildTools.exe --channelURI https://aka.ms/vs/%VS_VERSION%/release/channel --nocache --noUpdateInstaller --installPath %cd%\vs_buildtools --addProductLang en-US --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.Net.Component.SDK.4.7.2 --includeRecommended --wait --quiet"
 
           # store vs version number
           $(Get-Content channel.json | ConvertFrom-Json).info.productDisplayVersion | Out-File vs_buildtools/version.txt -Encoding ascii -NoNewline
