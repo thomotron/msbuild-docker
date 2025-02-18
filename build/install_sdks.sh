@@ -6,7 +6,7 @@ export WINEDEBUG="-all"
 wineboot --init
 
 # install dotnet 4.8
-winetricks --force --unattended dotnet48 win10
+winetricks --force --unattended dotnet472 dotnet48 win10
 
 # kill wineserver
 wineserver --kill
