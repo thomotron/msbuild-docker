@@ -1,8 +1,5 @@
 name: Build Container
 on:
-#  push:
-#    tags:
-#      - '*'
   workflow_dispatch:
     inputs:
       vs_version:
@@ -12,8 +9,22 @@ on:
 jobs:
   install_buildtools:
     runs-on: windows-latest
-    steps:
+    steps:    
+      - name: Restore cached artifacts
+        uses: actions/cache@v3
+        id: cache-artifacts
+        with:
+          path: artifacts.7z
+          key: artifacts-${{ github.event.inputs.vs_version }}
+          
+      - name: Prepare artifact directory
+        if: steps.cache-artifacts.outputs.cache-hit != 'true'
+        run: |
+          New-Item -ItemType Directory -Path artifacts -Force
+        shell: pwsh
+
       - name: Install buildtools
+        if: steps.cache-artifacts.outputs.cache-hit != 'true'
         run: |
           # download buildtools installer
           Invoke-WebRequest -Uri https://aka.ms/vs/17/release/vs_BuildTools.exe -OutFile vs_BuildTools.exe
@@ -21,27 +32,35 @@ jobs:
           # set VS_VERSION env variable
           $env:VS_VERSION = ${{ github.event.inputs.vs_version }}
           
-          # download release metadata
-          Invoke-WebRequest -Uri https://aka.ms/vs/$env:VS_VERSION/release/channel -OutFile channel.json
-          
           # run buildtools installer
-          cmd /S /C "start /w vs_BuildTools.exe --channelURI https://aka.ms/vs/%VS_VERSION%/release/channel --nocache --noUpdateInstaller --installPath %cd%\vs_buildtools --addProductLang en-US --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --wait --quiet"
+          cmd /S /C "start /w vs_BuildTools.exe --channelURI https://aka.ms/vs/%VS_VERSION%/release/channel --nocache --noUpdateInstaller --installPath %cd%\artifacts\vs_buildtools --addProductLang en-US --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.Net.Component.SDK.4.7.2 --includeRecommended --wait --quiet"
 
-          # store vs version number
-          $(Get-Content channel.json | ConvertFrom-Json).info.productDisplayVersion | Out-File vs_buildtools/version.txt -Encoding ascii -NoNewline
+      - name: Set up .NET SDK
+        if: steps.cache-artifacts.outputs.cache-hit != 'true'
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0'
 
-      - name: Compress buildtools
+      - name: Copy .NET SDK and reference assemblies
+        if: steps.cache-artifacts.outputs.cache-hit != 'true'
+        run: |
+          Copy-Item -Path "C:\\Program Files\\dotnet" -Destination "artifacts\\dotnet" -Recurse -Force
+          Copy-Item -Path "C:\\Program Files (x86)\\Reference Assemblies" -Destination "artifacts\\Reference Assemblies" -Recurse -Force
+        shell: pwsh
+
+      - name: Compress artifacts
+        if: steps.cache-artifacts.outputs.cache-hit != 'true'
         uses: DuckSoft/create-7z-action@v1.0
         with:
-          pathSource: vs_buildtools
-          pathTarget: vs_buildtools.7z
+          pathSource: artifacts
+          pathTarget: artifacts.7z
 
-      - name: Publish buildtools artifact
-        uses: actions/upload-artifact@v3.0.0
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4.4.0
         with:
-          name: BuildTools
-          path: vs_buildtools.7z
-            
+          name: artifacts
+          path: artifacts.7z
+  
   build_container:
     needs: install_buildtools
     runs-on: ubuntu-20.04
@@ -49,17 +68,17 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v2
         
-      - name: Download buildtools artifact
-        uses: actions/download-artifact@v3.0.0
+      - name: Download artifacts
+        uses: actions/download-artifact@v4.1.8
         with:
-          name: BuildTools
-          path: vs_buildtools.7z
-          
-      - name: Extract buildtools
+          name: artifacts
+          path: artifacts.7z
+        
+      - name: Extract artifacts
         uses: DuckSoft/extract-7z-action@v1.0
         with:
-          pathSource: vs_buildtools.7z
-          pathTarget: ./
+          pathSource: artifacts.7z
+          pathTarget: ./artifacts
         
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v1
@@ -71,12 +90,10 @@ jobs:
       - name: Build and push Docker image
         run: |
           VS_VERSION=${{ github.event.inputs.vs_version }}
-          VS_FULL_VERSION=$(cat vs_buildtools/version.txt)
-          docker build -t ghcr.io/rektinator/msbuild-docker:${{ github.event.inputs.vs_version }}-latest -t ghcr.io/rektinator/msbuild-docker:$VS_FULL_VERSION .
-          docker push ghcr.io/rektinator/msbuild-docker:${{ github.event.inputs.vs_version }}-latest
-          docker push ghcr.io/rektinator/msbuild-docker:$VS_FULL_VERSION
+          docker build -t ghcr.io/thomotron/msbuild-docker:${{ github.event.inputs.vs_version }}-latest .
+          docker push ghcr.io/thomotron/msbuild-docker:${{ github.event.inputs.vs_version }}-latest
           if [ $VS_VERSION -eq 17 ]
           then
-            docker tag ghcr.io/rektinator/msbuild-docker:${{ github.event.inputs.vs_version }}-latest ghcr.io/rektinator/msbuild-docker:latest
-            docker push ghcr.io/rektinator/msbuild-docker:latest
+            docker tag ghcr.io/thomotron/msbuild-docker:${{ github.event.inputs.vs_version }}-latest ghcr.io/thomotron/msbuild-docker:latest
+            docker push ghcr.io/thomotron/msbuild-docker:latest
           fi

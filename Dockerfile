@@ -22,6 +22,9 @@ RUN apt-get update && \
     dpkg --add-architecture i386 && \
     wget -qO- https://dl.winehq.org/wine-builds/winehq.key | apt-key add - && \
     apt-add-repository "deb http://dl.winehq.org/wine-builds/ubuntu/ $(lsb_release -cs) main" && \
+    wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
+    dpkg -i packages-microsoft-prod.deb && \
+    rm packages-microsoft-prod.deb && \
     apt-get update && \
     apt-get install --install-recommends --yes winehq-stable winbind cabextract && \
     wget -q https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks -O /usr/bin/winetricks && \
@@ -43,8 +46,10 @@ COPY --chown=${USER_ID}:${GROUP_ID} build/install_sdks.sh /tmp/
 RUN xvfb-run /tmp/install_sdks.sh && \
     rm -r ${HOME}/.cache/* /tmp/*
 
-# copy buildtools into container
-COPY --chown=${USER_ID}:${GROUP_ID} vs_buildtools /opt/msbuild/vs_buildtools
+# copy build tools, reference assemblies, and .NET SDK into the container
+COPY --chown=${USER_ID}:${GROUP_ID} /artifacts/artifacts/vs_buildtools /opt/msbuild/vs_buildtools
+COPY --chown=${USER_ID}:${GROUP_ID} ["/artifacts/artifacts/Reference Assemblies", "/home/runner/.wine/drive_c/Program Files (x86)/Reference Assemblies"]
+COPY --chown=${USER_ID}:${GROUP_ID} ["/artifacts/artifacts/dotnet", "/home/runner/.wine/drive_c/Program Files/dotnet"]
 
 # fix winsdk script
 # this if-statement condition ALWAYS fails under wine, seems to be a wine bug?
