@@ -29,6 +29,9 @@ RUN apt-get update && \
     apt-get clean && \
 	rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+# install .net 9
+RUN apt-get install --install-recommends --yes dotnet-sdk-9
+
 # create a new user called runner (running things as root is not necessary at this point anymore), create the src folder and give the user full permission to that folder
 RUN groupadd --gid ${GROUP_ID} runner && \
     useradd --create-home --uid ${USER_ID} --gid ${GROUP_ID} runner && \
