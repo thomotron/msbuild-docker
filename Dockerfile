@@ -46,6 +46,9 @@ RUN xvfb-run /tmp/install_sdks.sh && \
 # copy buildtools into container
 COPY --chown=${USER_ID}:${GROUP_ID} vs_buildtools /opt/msbuild/vs_buildtools
 
+# copy reference assemblies into container
+COPY --chown=${USER_ID}:${GROUP_ID} ReferenceAssemblies "${HOME}/.wine/drive_c/Program Files (x86)/ReferenceAssemblies"
+
 # fix winsdk script
 # this if-statement condition ALWAYS fails under wine, seems to be a wine bug?
 RUN sed -i 's/\"!result:~0,3!\"==\"10.\"/\"1\"==\"1\"/g' /opt/msbuild/vs_buildtools/Common7/Tools/vsdevcmd/core/winsdk.bat
