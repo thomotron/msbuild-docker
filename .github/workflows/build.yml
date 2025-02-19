@@ -15,8 +15,8 @@ jobs:
     steps:
       - name: Cry
         run: |
-          ls .\
-          ls C:\
+          ls "C:\Program Files (x86)\"
+          ls "C:\Program Files (x86)\ReferenceAssemblies\"
     
       - name: Install buildtools
         run: |
