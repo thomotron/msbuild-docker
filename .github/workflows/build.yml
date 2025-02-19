@@ -36,11 +36,23 @@ jobs:
           pathSource: vs_buildtools
           pathTarget: vs_buildtools.7z
 
+      - name: Compress reference assemblies
+        uses: DuckSoft/create-7z-action@v1.0
+        with:
+          pathSource: $ProgramFiles(x86)/ReferenceAssemblies
+          pathTarget: vs_buildtools.7z
+
       - name: Publish buildtools artifact
         uses: actions/upload-artifact@v4.4.0
         with:
           name: BuildTools
           path: vs_buildtools.7z
+
+      - name: Publish reference assemblies
+        uses: actions/upload-artifact@v4.4.0
+        with:
+          name: ReferenceAssemblies
+          path: referenceassemblies.7z
             
   build_container:
     needs: install_buildtools
@@ -54,11 +66,23 @@ jobs:
         with:
           name: BuildTools
           path: vs_buildtools.7z
+
+      - name: Download reference assemblies artifact
+        uses: actions/download-artifact@v4.1.8
+        with:
+          name: ReferenceAssemblies
+          path: referenceassemblies.7z
           
       - name: Extract buildtools
         uses: DuckSoft/extract-7z-action@v1.0
         with:
           pathSource: vs_buildtools.7z
+          pathTarget: ./
+
+      - name: Extract reference assemblies
+        uses: DuckSoft/extract-7z-action@v1.0
+        with:
+          pathSource: referenceassemblies.7z
           pathTarget: ./
         
       - name: Login to GitHub Container Registry
