@@ -47,7 +47,7 @@ RUN xvfb-run /tmp/install_sdks.sh && \
 COPY --chown=${USER_ID}:${GROUP_ID} vs_buildtools /opt/msbuild/vs_buildtools
 
 # copy reference assemblies into container
-COPY --chown=${USER_ID}:${GROUP_ID} ReferenceAssemblies "${HOME}/.wine/drive_c/Program Files (x86)/ReferenceAssemblies"
+COPY --chown=${USER_ID}:${GROUP_ID} "Reference Assemblies" "${HOME}/.wine/drive_c/Program Files (x86)/Reference Assemblies"
 
 # fix winsdk script
 # this if-statement condition ALWAYS fails under wine, seems to be a wine bug?
