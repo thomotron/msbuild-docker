@@ -12,12 +12,7 @@ on:
 jobs:
   install_buildtools:
     runs-on: windows-latest
-    steps:
-      - name: Cry
-        run: |
-          ls "C:\Program Files (x86)\"
-          ls "C:\Program Files (x86)\ReferenceAssemblies\"
-    
+    steps:    
       - name: Install buildtools
         run: |
           # download buildtools installer
@@ -44,7 +39,7 @@ jobs:
       - name: Compress reference assemblies
         uses: DuckSoft/create-7z-action@v1.0
         with:
-          pathSource: "C:\\Program Files (x86)\\ReferenceAssemblies"
+          pathSource: "C:\\Program Files (x86)\\Reference Assemblies"
           pathTarget: referenceassemblies.7z
 
       - name: Publish buildtools artifact
