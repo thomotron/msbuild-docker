@@ -39,8 +39,8 @@ jobs:
       - name: Compress reference assemblies
         uses: DuckSoft/create-7z-action@v1.0
         with:
-          pathSource: $ProgramFiles(x86)/ReferenceAssemblies
-          pathTarget: vs_buildtools.7z
+          pathSource: "${{ env['ProgramFiles(x86)'] }}\\ReferenceAssemblies"
+          pathTarget: referenceassemblies.7z
 
       - name: Publish buildtools artifact
         uses: actions/upload-artifact@v4.4.0
